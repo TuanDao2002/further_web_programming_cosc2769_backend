@@ -12,6 +12,10 @@ const userSchema = new mongoose.Schema({
   },
   gender: {
     type: String,
+    enum: {
+      values: ["Male", "Female", "Other"],
+      message: "{VALUE} is not a supported category", // Error message
+    },
     required: true,
   },
   location: {
@@ -19,12 +23,20 @@ const userSchema = new mongoose.Schema({
     required: true,
   },
   hobbies: {
-    type: String,
+    type: [String],
     required: true,
   },
   biography: {
     type: String,
     required: true,
+  },
+  major: {
+    type: String,
+    required: true,
+    enum: {
+      values: ["SSET", "SBM", "SCD"],
+      message: "{VALUE} is not a supported major", // Error message
+    },
   },
   password: {
     type: String,

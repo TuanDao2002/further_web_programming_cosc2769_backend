@@ -1,42 +1,75 @@
-var express = require('express');
+require("dotenv").config();
+require("express-async-errors");
+
+// extra security packages
+const helmet = require("helmet");
+const cors = require("cors");
+const xss = require("xss-clean");
+const rateLimiter = require("express-rate-limit");
+const cookieParser = require("cookie-parser");
+
+const express = require("express");
 const app = express();
-const cors = require('cors');
-const mongoose = require('mongoose');
-const multer = require('multer');
-const path = require('path');
-const cookieParser = require('cookie-parser');
 
-app.set('views', path.join(__dirname, 'views'));
-app.use(express.urlencoded({ extended: false }));
+// connect DB
+const connectDB = require("./db/connect");
+
+// routers
 
 
-// CORS for server and client communication
-app.use(
-    cors({
-      credentials: true,
-      origin: '*',
-    })
-);
+// error handler
+const notFoundMiddleware = require("./middleware/not-found");
+const errorHandlerMiddleware = require("./middleware/error-handler");
 
-// set limit request from same API in timePeroid from same ip
-// set this limit to API calls only
-const limiter = rateLimit({
-    max: 20, //   max number of limits
-    windowMs: 5 * 60 * 1000, // 5 minutes
-    message: ' Too many req from this IP , please Try  again in 5 minutes!',
-    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
-    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-    skipSuccessfulRequests: true, // skip if the request is succesful
-});
+app.set("trust proxy", 1);
+// app.use(
+// 	rateLimiter({
+// 		windowMs: 15 * 60 * 1000, // 15 minutes
+// 		max: 100, // limit each IP to 100 requests per windowMs
+// 	})
+// );
+app.use(helmet());
+// app.use(
+//     cors({
+//         origin: "", // only allow website in this domain too access the resource of this server
+//     })
+// );
+app.use(cors());
+app.use(xss());
 
-app.use('/api', limiter);
-
-app.use(express.json({ limit: '10kb' }));
-
-// Enable parsing cookies to read
+app.use(express.json());
 app.use(cookieParser());
 
-const port = 3000;
-app.listen(port, ()=>{
-    console.log(`Listening at port: ${port}`)
-})
+const fileUpload = require("express-fileupload");
+app.use(fileUpload({ useTempFiles: true }));
+
+// config cloudinary V2
+/*
+const cloudinary = require("cloudinary").v2;
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+*/
+
+// routes
+
+
+app.use(notFoundMiddleware);
+app.use(errorHandlerMiddleware);
+
+const port = process.env.PORT || 8080;
+
+const start = async () => {
+    try {
+        await connectDB(process.env.MONGO_URI);
+        app.listen(port, () =>
+            console.log(`Server is listening on port ${port}...`)
+        );
+    } catch (error) {
+        console.log(error);
+    }
+};
+
+start();
