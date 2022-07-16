@@ -2,7 +2,7 @@ const User = require("../models/User")
 const CustomError = require("../errors");
 
 const getAllUsers = async (req, res) => {
-    return User.find()
+    const users = await User.find();
 }
 
 const deleteUser = async (req, res) => {
@@ -11,7 +11,7 @@ const deleteUser = async (req, res) => {
     if (!user) {
         throw new CustomError.BadRequestError();
     }else{
-        User.deleteOne({ _id: userId});
+        User.remove();
     };
 }
 
