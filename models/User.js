@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema({
   },
   biography: {
     type: String,
+    maxLength: 100,
     required: true,
   },
   major: {
