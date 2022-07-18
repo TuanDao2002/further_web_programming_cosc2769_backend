@@ -3,6 +3,7 @@ const CustomError = require("../errors");
 
 const getAllUsers = async (req, res) => {
     const users = await User.find();
+    res.status(StatusCodes.OK).json({ users, count: users.length });
 }
 
 const deleteUsers = async (req, res) => {
@@ -12,6 +13,7 @@ const deleteUsers = async (req, res) => {
         throw new CustomError.BadRequestError();
     }else{
         User.remove();
+        res.status(StatusCodes.OK).json({ msg: 'Success! User removed.' });
     };
 }
 
