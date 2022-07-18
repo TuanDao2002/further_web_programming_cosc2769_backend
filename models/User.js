@@ -1,7 +1,11 @@
 const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
-  name: {
+  fname: {
+    type: String,
+    required: true,
+  },
+  lname: {
     type: String,
     required: true,
   },
@@ -21,6 +25,10 @@ const userSchema = new mongoose.Schema({
   location: {
     type: String,
     required: true,
+    enum: {
+      values: ["HCM City", "Hanoi", "Danang"],
+      message: "{VALUE} is not a supported location", // Error message
+    },
   },
   hobbies: {
     type: [String],
