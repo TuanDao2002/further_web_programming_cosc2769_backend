@@ -4,7 +4,7 @@ const checkRole = require("./checkRole");
 const generateOTP = require("./generateOTP");
 const sendOTPtoEmail = require("./sendOTPtoEmail");
 const sendVerificationEmail = require("./sendVerificationEmail");
-const getIP = require("./getIP");
+const createTokenUser = require("./createTokenUser");
 const attachCookiesToResponse = require("./attachCookiesToResponse");
 
 module.exports = {
@@ -15,6 +15,6 @@ module.exports = {
     generateOTP,
     sendOTPtoEmail,
     sendVerificationEmail,
-    getIP,
+    createTokenUser,
     attachCookiesToResponse,
 };

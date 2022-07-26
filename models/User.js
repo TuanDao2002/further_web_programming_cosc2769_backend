@@ -1,56 +1,78 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
+const validator = require("validator");
 
 const userSchema = new mongoose.Schema({
-  fname: {
-    type: String,
-    required: true,
-  },
-  lname: {
-    type: String,
-    required: true,
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-  },
-  gender: {
-    type: String,
-    enum: {
-      values: ["Male", "Female", "Other"],
-      message: "{VALUE} is not a supported category", // Error message
+    username: {
+        type: String,
+        required: [true, "Please provide username"],
+        minlength: [3, "Length must be greater than 3"],
+        maxlength: [20, "Length must be less than 20"],
+        trim: true,
+        unique: true,
     },
-    required: true,
-  },
-  location: {
-    type: String,
-    required: true,
-    enum: {
-      values: ["HCM City", "Hanoi", "Danang"],
-      message: "{VALUE} is not a supported location", // Error message
+
+    email: {
+        type: String,
+        required: [true, "Please provide email"],
+        unique: true,
+        trim: true,
+        validate: {
+            validator: validator.isEmail,
+            message: "Please provide valid email",
+        },
     },
-  },
-  hobbies: {
-    type: [String],
-    required: true,
-  },
-  biography: {
-    type: String,
-    maxLength: 100,
-    required: true,
-  },
-  major: {
-    type: String,
-    required: true,
-    enum: {
-      values: ["SSET", "SBM", "SCD"],
-      message: "{VALUE} is not a supported major", // Error message
+
+    role: {
+        type: String,
+        enum: {
+            values: ["admin", "student"],
+            message: "{VALUE} is not supported",
+        },
+        required: true,
     },
-  },
-  password: {
-    type: String,
-    required: true,
-  },
+
+    password: {
+        type: String,
+        required: true,
+    },
+
+    isVerified: {
+        type: Boolean,
+        default: false,
+    },
+
+    gender: {
+        type: String,
+        enum: {
+            values: ["Male", "Female", "Other"],
+            message: "{VALUE} is not a supported category", // Error message
+        },
+    },
+
+    location: {
+        type: String,
+        enum: {
+            values: ["HCM City", "Hanoi", "Danang"],
+            message: "{VALUE} is not a supported location", // Error message
+        },
+    },
+
+    hobbies: {
+        type: [String],
+    },
+
+    biography: {
+        type: String,
+        maxLength: 100,
+    },
+
+    major: {
+        type: String,
+        enum: {
+            values: ["SSET", "SBM", "SCD"],
+            message: "{VALUE} is not a supported major", // Error message
+        },
+    },
 });
 
-module.exports = mongoose.model('User', userSchema);
+module.exports = mongoose.model("User", userSchema);
