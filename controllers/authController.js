@@ -149,8 +149,27 @@ const login = async (req, res) => {
 	res.status(StatusCodes.OK).json({ user: tokenUser });
 };
 
+const logout = async (req, res) => {
+	await Token.findOneAndDelete({ user: req.user.userId });
+
+	res.cookie("accessToken", "logout", {
+		httpOnly: true,
+		expires: new Date(Date.now()),
+	});
+	res.cookie("refreshToken", "logout", {
+		httpOnly: true,
+		expires: new Date(Date.now()),
+	});
+	res.status(StatusCodes.OK).json({ msg: "Logged out!" });
+};
+
+const forgotPassword = async (req, res) => {
+	
+}
+
 module.exports = {
 	register,
 	createProfile,
 	login,
+	logout
 };
