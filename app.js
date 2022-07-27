@@ -15,7 +15,6 @@ const connectDB = require("./db/connect");
 
 // routers
 
-
 // error handler
 const notFoundMiddleware = require("./middleware/not-found");
 const errorHandlerMiddleware = require("./middleware/error-handler");
@@ -47,7 +46,6 @@ cloudinary.config({
 */
 
 // routes
-
 
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);

@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
-const bcrypt = require('bcryptjs');
+const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
 	username: {
@@ -62,11 +62,11 @@ const userSchema = new mongoose.Schema({
 		maxLength: 100,
 	},
 
-	major: {
+	school: {
 		type: String,
 		enum: {
 			values: ["SSET", "SBM", "SCD"],
-			message: "{VALUE} is not a supported major", // Error message
+			message: "{VALUE} is not a supported school", // Error message
 		},
 	},
 });
