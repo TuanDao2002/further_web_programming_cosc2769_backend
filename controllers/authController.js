@@ -79,6 +79,7 @@ const register = async (req, res) => {
 
 const createProfile = async (req, res) => {
 	const {
+		verificationToken,
 		images,
 		age,
 		gender,
@@ -86,7 +87,7 @@ const createProfile = async (req, res) => {
 		hobbies,
 		biography,
 		school,
-		verificationToken,
+		interested,
 	} = req.body;
 	if (!verificationToken) {
 		throw new CustomError.UnauthenticatedError("Cannot verify user");
@@ -123,13 +124,30 @@ const createProfile = async (req, res) => {
 		throw new CustomError.BadRequestError("This email already exists");
 	}
 
+	if (checkRole(email) === "admin") {
+		await User.create({
+			username: "admin",
+			email,
+			role,
+			password,
+		});
+
+		res.status(StatusCodes.OK).json({
+			msg: `Admin account is created!`,
+		});
+
+		return;
+	}
+
 	const cloudinaryRegex = /^https:\/\/res.cloudinary.com\/$/;
 	if (!images || images.length < 1) {
 		throw new CustomError.BadRequestError("There must be at least 1 image");
 	}
 	for (image of images) {
 		if (!image.match(cloudinaryRegex)) {
-			throw new CustomError.BadRequestError("The image link must be valid and uploaded to cloudinary");
+			throw new CustomError.BadRequestError(
+				"The image link must be valid and uploaded to Cloudinary"
+			);
 		}
 	}
 
@@ -141,7 +159,11 @@ const createProfile = async (req, res) => {
 		throw new CustomError.BadRequestError("Not a supported gender");
 	}
 
-	if (location !== "HCM City" && location !== "Hanoi" && location !== "Danang") {
+	if (
+		location !== "HCM City" &&
+		location !== "Hanoi" &&
+		location !== "Danang"
+	) {
 		throw new CustomError.BadRequestError("Not a supported location");
 	}
 
@@ -150,44 +172,95 @@ const createProfile = async (req, res) => {
 	}
 	for (hobby of hobbies) {
 		if (hobby.length < 3 || hobby.length > 20 || hobby.match(tagRegex)) {
-			throw new CustomError.BadRequestError("Each hobby must have from 3 to 20 characters and does not have any tag");
+			throw new CustomError.BadRequestError(
+				"Each hobby must have from 3 to 20 characters and does not have any tag"
+			);
 		}
 	}
 
 	if (!biography || biography.length > 100 || biography.match(tagRegex)) {
-		throw new CustomError.BadRequestError("The biography must have less than 100 characters and does not have any tag");
+		throw new CustomError.BadRequestError(
+			"The biography must have less than 100 characters and does not have any tag"
+		);
 	}
 
 	if (school !== "SSET" && school !== "SCD" && school !== "SBM") {
 		throw new CustomError.BadRequestError("Not a supported school");
 	}
 
-	let user;
-	if (checkRole(email) === "admin") {
-		user = await User.create({
-			username: "admin",
-			email,
-			role,
-			password,
-		});
-	} else {
-		user = await User.create({
-			username,
-			email,
-			role,
-			password,
-			images,
-			age,
-			gender,
-			location,
-			hobbies,
-			biography,
-			school,
-		});
+	const {
+		interestedGender,
+		interestedMinAge,
+		interestedMaxAge,
+		interestedLocation,
+		interestedHobbies,
+	} = interested;
+
+	if (!interestedGender) {
+		if (gender === "Male") {
+			interested.interestedGender = "Female";
+		} else if (gender === "Female") {
+			interested.interestedGender = "Male";
+		}
 	}
 
+	if (
+		interestedGender !== "Male" &&
+		interestedGender !== "Female" &&
+		interestedGender !== "Other"
+	) {
+		throw new CustomError.BadRequestError("Not a supported interested gender");
+	}
+
+	if (
+		interestedMinAge &&
+		interestedMaxAge &&
+		interestedMinAge > interestedMaxAge
+	) {
+		throw new CustomError.BadRequestError(
+			"Min age must be smaller than max age"
+		);
+	}
+
+	if (interestedLocation) {
+		if (
+			interestedLocation !== "HCM City" &&
+			interestedLocation !== "Hanoi" &&
+			interestedLocation !== "Danang"
+		) {
+			throw new CustomError.BadRequestError(
+				"Not a supported interested location"
+			);
+		}
+	}
+
+	if (interestedHobbies) {
+		for (hobby of interestedHobbies) {
+			if (hobby.length < 3 || hobby.length > 20 || hobby.match(tagRegex)) {
+				throw new CustomError.BadRequestError(
+					"Each interested hobby must have from 3 to 20 characters and does not have any tag"
+				);
+			}
+		}
+	}
+
+	await User.create({
+		username,
+		email,
+		role,
+		password,
+		images,
+		age,
+		gender,
+		location,
+		hobbies,
+		biography,
+		school,
+		interested,
+	});
+
 	res.status(StatusCodes.OK).json({
-		msg: `Profile with username: ${user.username} is created!`,
+		msg: `Profile with username: ${username} is created!`,
 	});
 };
 

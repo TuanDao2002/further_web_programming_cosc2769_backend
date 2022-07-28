@@ -79,36 +79,10 @@ const userSchema = new mongoose.Schema({
 		},
 	},
 
-	interestedGender: {
-		type: String,
-		enum: {
-			values: ["Male", "Female", "Other"],
-			message: "{VALUE} is not a supported category", // Error message
-		},
-	},
-
-	interestedHobbies: {
-		type: [String],
-		default: []
-	},
-
-	interestedMinAge: {
-		type: Number,
-		min: 18,
-	},
-
-	interestedMaxAge: {
-		type: Number,
-		max: 100,
-	},
-
-	interestedLocation: {
-		type: String,
-		enum: {
-			values: ["HCM City", "Hanoi", "Danang"],
-			message: "{VALUE} is not a supported location", // Error message
-		},
-	},
+	interested: {
+		type: Object,
+		default: {}
+	}
 });
 
 UserSchema.pre("save", async function () {
