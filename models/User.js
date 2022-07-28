@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
-const bcrypt = require('bcrypt');
+const bcrypt = require("bcrypt");
 
 const userSchema = new mongoose.Schema({
 	username: {
@@ -37,6 +37,15 @@ const userSchema = new mongoose.Schema({
 		required: true,
 	},
 
+	images: {
+		type: [String],
+	},
+
+	age: {
+		type: Number,
+		min: 18,
+	},
+
 	gender: {
 		type: String,
 		enum: {
@@ -67,6 +76,37 @@ const userSchema = new mongoose.Schema({
 		enum: {
 			values: ["SSET", "SBM", "SCD"],
 			message: "{VALUE} is not a supported school", // Error message
+		},
+	},
+
+	interestedGender: {
+		type: String,
+		enum: {
+			values: ["Male", "Female", "Other"],
+			message: "{VALUE} is not a supported category", // Error message
+		},
+	},
+
+	interestedHobbies: {
+		type: [String],
+		default: []
+	},
+
+	interestedMinAge: {
+		type: Number,
+		min: 18,
+	},
+
+	interestedMaxAge: {
+		type: Number,
+		max: 100,
+	},
+
+	interestedLocation: {
+		type: String,
+		enum: {
+			values: ["HCM City", "Hanoi", "Danang"],
+			message: "{VALUE} is not a supported location", // Error message
 		},
 	},
 });
