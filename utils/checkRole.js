@@ -1,5 +1,4 @@
 const CustomError = require("../errors");
-const vendorsList = require("./vendors.json");
 
 const checkRole = (email) => {
     const adminEmail = "cosc2769rmitinder@gmail.com";

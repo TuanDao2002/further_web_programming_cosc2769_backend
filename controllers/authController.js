@@ -29,7 +29,7 @@ const register = async (req, res) => {
 	}
 
 	// prevent SQL injection
-	if (username.match(/^[A-Za-z0-9_-]*$/)) {
+	if (!username.match(/^[A-Za-z0-9_-]*$/)) {
 		throw new CustomError.BadRequestError(
 			"The username must not have strange characters"
 		);
