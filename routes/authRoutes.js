@@ -19,11 +19,7 @@ const { uploadUserImage } = require("../controllers/imageController");
 
 router.post("/register", register);
 router.post("/createProfile", createProfile);
-
-router
-    .route("/upload-image")
-    .post([authenticateUser, authorizePermissions("student")], uploadUserImage);
-    
+router.post("/upload-image", uploadUserImage);
 router.post("/login", login);
 router.delete("/logout", authenticateUser, logout);
 router.post("/forgot-password", forgotPassword);

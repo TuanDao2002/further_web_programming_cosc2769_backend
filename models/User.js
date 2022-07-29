@@ -68,7 +68,7 @@ const UserSchema = new mongoose.Schema({
 
 	biography: {
 		type: String,
-		maxLength: 100,
+		maxLength: 500,
 	},
 
 	school: {

@@ -1,6 +1,6 @@
 const nodemailer = require("nodemailer");
 
-const sendOTPtoEmail = async (email, subject, html) => {
+const sendEmail = async (email, subject, html) => {
     const transporter = nodemailer.createTransport({
         host: "smtp.gmail.com", // hostname
         port: 465,
@@ -19,4 +19,4 @@ const sendOTPtoEmail = async (email, subject, html) => {
     });
 };
 
-module.exports = sendOTPtoEmail;
+module.exports = sendEmail;
