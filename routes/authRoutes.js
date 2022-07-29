@@ -1,7 +1,10 @@
 const express = require("express");
 const router = express.Router();
 
-const { authenticateUser } = require("../middleware/authentication");
+const {
+    authenticateUser,
+    authorizePermissions,
+} = require("../middleware/authentication");
 
 const {
     register,
@@ -12,8 +15,15 @@ const {
     resetPassword,
 } = require("../controllers/authController");
 
+const { uploadUserImage } = require("../controllers/imageController");
+
 router.post("/register", register);
 router.post("/createProfile", createProfile);
+
+router
+    .route("/upload-image")
+    .post([authenticateUser, authorizePermissions("student")], uploadUserImage);
+    
 router.post("/login", login);
 router.delete("/logout", authenticateUser, logout);
 router.post("/forgot-password", forgotPassword);
