@@ -8,6 +8,7 @@ const {
     createTokenUser,
     attachCookiesToResponse,
     sendResetPasswordEmail,
+    validateRequiredProfileInput,
 } = require("../utils");
 
 const User = require("../models/User");
@@ -16,8 +17,6 @@ const Token = require("../models/Token");
 const useragent = require("express-useragent");
 const crypto = require("crypto");
 
-// regex check if there are any tag
-const tagRegex = /<.*>/g;
 const normalCharRegex = /^[A-Za-z0-9._-]*$/;
 
 const register = async (req, res) => {
@@ -86,7 +85,6 @@ const createProfile = async (req, res) => {
         gender,
         location,
         hobbies,
-        biography,
         school,
     } = req.body;
     if (!verificationToken) {
@@ -116,11 +114,11 @@ const createProfile = async (req, res) => {
     const { username, email, role, password, expirationDate } = decoded;
     const now = new Date();
 
-    // if (new Date(expirationDate).getTime() <= now.getTime()) {
-    // 	throw new CustomError.UnauthenticatedError(
-    // 		"Verification token is expired after 10 minutes"
-    // 	);
-    // }
+    if (new Date(expirationDate).getTime() <= now.getTime()) {
+        throw new CustomError.UnauthenticatedError(
+            "Verification token is expired after 10 minutes"
+        );
+    }
 
     const findEmail = await User.findOne({ email });
     if (findEmail) {
@@ -142,64 +140,14 @@ const createProfile = async (req, res) => {
         return;
     }
 
-    const cloudinaryRegex = /^https:\/\/res.cloudinary.com\//;
-    if (!images || images.length < 1) {
-        throw new CustomError.BadRequestError("There must be at least 1 image");
-    }
-    for (image of images) {
-        if (!image.match(cloudinaryRegex)) {
-            throw new CustomError.BadRequestError(
-                "The image link must be valid"
-            );
-        }
-    }
-
-    if (!age || age < 18) {
-        throw new CustomError.BadRequestError(
-            "The age must be set and at least 18"
-        );
-    }
-
-    if (gender !== "Male" && gender !== "Female" && gender !== "Other") {
-        throw new CustomError.BadRequestError("Gender must be set and valid");
-    }
-
-    if (
-        location !== "HCM City" &&
-        location !== "Hanoi" &&
-        location !== "Danang"
-    ) {
-        throw new CustomError.BadRequestError("Location must be set and valid");
-    }
-
-    if (!hobbies || hobbies.length < 3) {
-        throw new CustomError.BadRequestError(
-            "There must be at least 3 hobbies"
-        );
-    }
-    for (hobby of hobbies) {
-        if (
-            hobby.length < 3 ||
-            hobby.length > 20 ||
-            !hobby.match(normalCharRegex)
-        ) {
-            throw new CustomError.BadRequestError(
-                "Each hobby must have from 3 to 20 characters and does not have any strange character"
-            );
-        }
-    }
-
-    if (biography && (biography.length > 100 || biography.match(tagRegex))) {
-        throw new CustomError.BadRequestError(
-            "The biography must be less than 100 characters and does not have strange characters"
-        );
-    }
-
-    if (school !== "SSET" && school !== "SCD" && school !== "SBM") {
-        throw new CustomError.BadRequestError(
-            "RMIT school must be set and valid"
-        );
-    }
+    validateRequiredProfileInput(
+        images,
+        age,
+        gender,
+        location,
+        hobbies,
+        school
+    );
 
     let interestedGender;
     if (gender === "Male") {
@@ -207,15 +155,15 @@ const createProfile = async (req, res) => {
     } else if (gender === "Female") {
         interestedGender = "Male";
     } else {
-		interestedGender = "Other"
-	}
+        interestedGender = "Other";
+    }
 
     const interested = {
-		interestedGender,
-		interestedMinAge: age <= 23 ? 18: age - 5,
-		interestedMaxAge: age + 5,
-		interestedLocation: location
-	};
+        interestedGender,
+        interestedMinAge: age <= 23 ? 18 : age - 5,
+        interestedMaxAge: age + 5,
+        interestedLocation: location,
+    };
 
     await User.create({
         username,
@@ -227,7 +175,6 @@ const createProfile = async (req, res) => {
         gender,
         location,
         hobbies,
-        biography,
         school,
         interested,
     });
@@ -247,12 +194,16 @@ const login = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-        throw new CustomError.UnauthenticatedError("Email or password is not matched");
+        throw new CustomError.UnauthenticatedError(
+            "Email or password is not matched"
+        );
     }
 
     const isPasswordCorrect = await user.comparePassword(password);
     if (!isPasswordCorrect) {
-        throw new CustomError.UnauthenticatedError("Email or password is not matched");
+        throw new CustomError.UnauthenticatedError(
+            "Email or password is not matched"
+        );
     }
 
     const tokenUser = createTokenUser(user);

@@ -5,6 +5,7 @@ const sendResetPasswordEmail = require("./sendResetPasswordEmail");
 const sendVerificationEmail = require("./sendVerificationEmail");
 const createTokenUser = require("./createTokenUser");
 const attachCookiesToResponse = require("./attachCookiesToResponse");
+const validateRequiredProfileInput = require("./validateRequiredProfileInput");
 
 module.exports = {
     createJWT,
@@ -15,4 +16,5 @@ module.exports = {
     sendVerificationEmail,
     createTokenUser,
     attachCookiesToResponse,
+    validateRequiredProfileInput,
 };
