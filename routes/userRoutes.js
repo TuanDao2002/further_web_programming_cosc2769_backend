@@ -5,7 +5,7 @@ const {
     getAllUsers,
     getUserProfile,
     updateUser,
-    deleteUsers,
+    deleteUser,
 } = require("../controllers/userController");
 
 const {
@@ -13,13 +13,14 @@ const {
     authorizePermissions,
 } = require("../middleware/authentication");
 
-router.route("/").get(getAllUsers);
+router
+    .route("/")
+    .get(authenticateUser, getAllUsers)
+    .delete([authenticateUser, authorizePermissions("admin")], deleteUser)
 
 router
     .route("/:id")
-    .get(authenticateUser, getUserProfile)
+    .get([authenticateUser, authorizePermissions("student")], getUserProfile)
     .patch([authenticateUser, authorizePermissions("student")], updateUser);
-
-router.route("/").delete(deleteUsers);
 
 module.exports = router;

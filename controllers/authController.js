@@ -73,6 +73,7 @@ const register = async (req, res) => {
     );
 
     res.status(StatusCodes.CREATED).json({
+        role,
         msg: "Please check your email to verify your account!",
     });
 };
@@ -162,7 +163,7 @@ const createProfile = async (req, res) => {
         interestedGender,
         interestedMinAge: age <= 23 ? 18 : age - 5,
         interestedMaxAge: age + 5,
-        interestedLocation: location,
+        interestedLocations: [location],
     };
 
     await User.create({

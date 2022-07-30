@@ -5,7 +5,37 @@ const { validateRequiredProfileInput } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 
 const getAllUsers = async (req, res) => {
-    const users = await User.find();
+    const { userId } = req.user;
+
+    const user = await User.findOne({ _id: userId });
+    if (!user) {
+        throw new CustomError.BadRequestError("Your account does not exist");
+    }
+
+    let queryObject = {};
+    const {
+        role,
+        hobbies,
+        interested: {
+            interestedGender,
+            interestedMinAge,
+            interestedMaxAge,
+            interestedLocations,
+        },
+    } = user;
+
+    if (role === "student") {
+        // queryObject.role = "student";
+        // queryObject._id = { $ne: userId };
+        queryObject.hobbies = { $in: hobbies };
+        queryObject.gender = interestedGender;
+        queryObject.age = { $gte: interestedMinAge, $lte: interestedMaxAge };
+        queryObject.location = { $in: interestedLocations };
+    }
+    
+    const users = await User.find(queryObject).select(
+        "-password -interested -email -role"
+    );
     res.status(StatusCodes.OK).json({ users, count: users.length });
 };
 
@@ -86,7 +116,7 @@ const updateUser = async (req, res) => {
         interestedGender,
         interestedMinAge,
         interestedMaxAge,
-        interestedLocation,
+        interestedLocations,
     } = interested;
 
     if (
@@ -118,14 +148,22 @@ const updateUser = async (req, res) => {
         );
     }
 
-    if (
-        interestedLocation !== "HCM City" &&
-        interestedLocation !== "Danang" &&
-        interestedLocation !== "Hanoi"
-    ) {
+    if (!Array.isArray(interestedLocations) || interestedLocations.length < 1) {
         throw new CustomError.BadRequestError(
-            "The interested location must be valid"
+            "There must be at least 1 interested location"
         );
+    }
+
+    for (interestedLocation of interestedLocations) {
+        if (
+            interestedLocation !== "HCM City" &&
+            interestedLocation !== "Danang" &&
+            interestedLocation !== "Hanoi"
+        ) {
+            throw new CustomError.BadRequestError(
+                "The interested location must be valid"
+            );
+        }
     }
 
     user.username = username;
@@ -144,7 +182,7 @@ const updateUser = async (req, res) => {
     });
 };
 
-const deleteUsers = async (req, res) => {
+const deleteUser = async (req, res) => {
     const {
         params: { id: userId },
     } = req;
@@ -161,5 +199,5 @@ module.exports = {
     getAllUsers,
     getUserProfile,
     updateUser,
-    deleteUsers,
+    deleteUser,
 };
