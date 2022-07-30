@@ -10,7 +10,6 @@ const getAllUsers = async (req, res) => {
 };
 
 const normalCharRegex = /^[A-Za-z0-9._-]*$/;
-
 const updateUser = async (req, res) => {
     const {
         params: { id: profileId },
@@ -37,7 +36,7 @@ const updateUser = async (req, res) => {
         throw new CustomError.BadRequestError("You cannot edit this profile");
     }
 
-    if (username.length < 1 || username.length > 22) {
+    if (!username || username.length < 1 || username.length > 22) {
         throw new CustomError.BadRequestError(
             "The username must have from 1 to 22 characters"
         );
@@ -82,13 +81,17 @@ const updateUser = async (req, res) => {
         );
     }
 
+    if (typeof(interestedMinAge) !== "number" || typeof(interestedMaxAge) !== "number") {
+        throw new CustomError.BadRequestError("Interested min and max age must be set")
+    }
+
     if (
         interestedMinAge < 18 ||
         interestedMaxAge > 100 ||
         interestedMinAge >= interestedMaxAge
     ) {
         throw new CustomError.BadRequestError(
-            "The age range must be from 18 to 100 and the minimum age must be greater than the maximum age"
+            "The age range must be from 18 to 100 and the minimum age must be less than the maximum age"
         );
     }
 
@@ -113,7 +116,7 @@ const updateUser = async (req, res) => {
     user.interested = interested;
     await user.save();
 
-    res.status(StatusCodes.OK).json({ user });
+    res.status(StatusCodes.OK).json({ msg: "Your profile is updated successfully" });
 };
 
 const deleteUsers = async (req, res) => {

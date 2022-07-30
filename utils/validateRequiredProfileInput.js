@@ -21,9 +21,9 @@ const validateRequiredProfileInput = (
         }
     }
 
-    if (!age || age < 18) {
+    if (typeof(age) !== "number" || age < 18) {
         throw new CustomError.BadRequestError(
-            "The age must be set and at least 18"
+            "The age must be valid and at least 18"
         );
     }
 
@@ -39,7 +39,7 @@ const validateRequiredProfileInput = (
         throw new CustomError.BadRequestError("Location must be set and valid");
     }
 
-    if (!hobbies || hobbies.length < 3) {
+    if (!Array.isArray(hobbies) || hobbies.length < 3) {
         throw new CustomError.BadRequestError(
             "There must be at least 3 hobbies"
         );

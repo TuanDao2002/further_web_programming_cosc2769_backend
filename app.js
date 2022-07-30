@@ -16,6 +16,7 @@ const connectDB = require("./db/connect");
 
 // routers
 const authRouter = require("./routes/authRoutes");
+const userRouter = require("./routes/userRoutes");
 
 // error handler
 const notFoundMiddleware = require("./middleware/not-found");
@@ -46,9 +47,9 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-
 // routes
 app.use("/api/auth", authRouter);
+app.use("/api/user", userRouter);
 
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);
