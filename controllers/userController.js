@@ -5,7 +5,15 @@ const { validateRequiredProfileInput } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 
 const getAllUsers = async (req, res) => {
-    const { userId } = req.user;
+    const users = await User.find();
+    res.status(StatusCodes.OK).json({ users });
+};
+
+const getInterestProfiles = async (req, res) => {
+    let {
+        user: { userId },
+        query: { next_cursor },
+    } = req;
 
     const user = await User.findOne({ _id: userId });
     if (!user) {
@@ -14,7 +22,6 @@ const getAllUsers = async (req, res) => {
 
     let queryObject = {};
     const {
-        role,
         hobbies,
         interested: {
             interestedGender,
@@ -24,19 +31,48 @@ const getAllUsers = async (req, res) => {
         },
     } = user;
 
-    if (role === "student") {
-        // queryObject.role = "student";
-        // queryObject._id = { $ne: userId };
-        queryObject.hobbies = { $in: hobbies };
-        queryObject.gender = interestedGender;
-        queryObject.age = { $gte: interestedMinAge, $lte: interestedMaxAge };
-        queryObject.location = { $in: interestedLocations };
+    // queryObject.role = "student";
+    // queryObject._id = { $ne: userId };
+    // queryObject.hobbies = { $in: hobbies };
+    // queryObject.gender = interestedGender;
+    // queryObject.age = { $gte: interestedMinAge, $lte: interestedMaxAge };
+    // queryObject.location = { $in: interestedLocations };
+
+    // apply cursor based pagination
+    const resultsLimitPerLoading = 10;
+    if (next_cursor) {
+        const [createdAt, _id] = Buffer.from(next_cursor, "base64")
+            .toString("ascii")
+            .split("_");
+
+        queryObject.$or = [
+            { createdAt: { $gt: createdAt } },
+            { createdAt: createdAt, _id: { $lt: _id } },
+        ];
     }
-    
-    const users = await User.find(queryObject).select(
+
+    let users = User.find(queryObject).select(
         "-password -interested -email -role"
     );
-    res.status(StatusCodes.OK).json({ users, count: users.length });
+
+    // return results sorted based on created time (profiles created first will be displayed first)
+    users = users.sort("createdAt");
+    users = users.limit(resultsLimitPerLoading);
+    const results = await users;
+
+    const count = await User.countDocuments(queryObject);
+    const remainingResults = count - results.length;
+    next_cursor = null;
+
+    // if the there are still remaining results, create a cursor to load the next ones
+    if (count !== results.length) {
+        const lastResult = results[results.length - 1];
+        next_cursor = Buffer.from(
+            lastResult.createdAt.toISOString() + "_" + lastResult._id
+        ).toString("base64");
+    }
+
+    res.status(StatusCodes.OK).json({ results, next_cursor });
 };
 
 const getUserProfile = async (req, res) => {
@@ -197,6 +233,7 @@ const deleteUser = async (req, res) => {
 
 module.exports = {
     getAllUsers,
+    getInterestProfiles,
     getUserProfile,
     updateUser,
     deleteUser,

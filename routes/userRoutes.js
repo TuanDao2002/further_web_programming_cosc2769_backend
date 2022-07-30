@@ -3,6 +3,7 @@ const router = express.Router();
 
 const {
     getAllUsers,
+    getInterestProfiles,
     getUserProfile,
     updateUser,
     deleteUser,
@@ -15,8 +16,15 @@ const {
 
 router
     .route("/")
-    .get(authenticateUser, getAllUsers)
-    .delete([authenticateUser, authorizePermissions("admin")], deleteUser)
+    .get([authenticateUser, authorizePermissions("admin")], getAllUsers)
+    .delete([authenticateUser, authorizePermissions("admin")], deleteUser);
+
+router
+    .route("/profiles")
+    .get(
+        [authenticateUser, authorizePermissions("student")],
+        getInterestProfiles
+    );
 
 router
     .route("/:id")
