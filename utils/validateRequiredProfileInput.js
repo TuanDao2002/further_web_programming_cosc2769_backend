@@ -21,7 +21,7 @@ const validateRequiredProfileInput = (
         }
     }
 
-    if (typeof(age) !== "number" || age < 18) {
+    if (typeof age !== "number" || age < 18) {
         throw new CustomError.BadRequestError(
             "The age must be valid and at least 18"
         );
@@ -63,4 +63,4 @@ const validateRequiredProfileInput = (
     }
 };
 
-module.exports = validateRequiredProfileInput
+module.exports = validateRequiredProfileInput;

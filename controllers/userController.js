@@ -9,6 +9,24 @@ const getAllUsers = async (req, res) => {
     res.status(StatusCodes.OK).json({ users, count: users.length });
 };
 
+const getUserProfile = async (req, res) => {
+    const {
+        params: { id: profileId },
+        user: { userId },
+    } = req;
+
+    const user = await User.findOne({ _id: profileId }).select("-password");
+    if (!user) {
+        throw new CustomError.BadRequestError("This profile does not exist");
+    }
+
+    if (userId !== profileId) {
+        throw new CustomError.BadRequestError("You cannot view this profile");
+    }
+
+    res.status(StatusCodes.OK).json({ user });
+};
+
 const normalCharRegex = /^[A-Za-z0-9._-]*$/;
 const updateUser = async (req, res) => {
     const {
@@ -81,8 +99,13 @@ const updateUser = async (req, res) => {
         );
     }
 
-    if (typeof(interestedMinAge) !== "number" || typeof(interestedMaxAge) !== "number") {
-        throw new CustomError.BadRequestError("Interested min and max age must be set")
+    if (
+        typeof interestedMinAge !== "number" ||
+        typeof interestedMaxAge !== "number"
+    ) {
+        throw new CustomError.BadRequestError(
+            "Interested min and max age must be set"
+        );
     }
 
     if (
@@ -116,7 +139,9 @@ const updateUser = async (req, res) => {
     user.interested = interested;
     await user.save();
 
-    res.status(StatusCodes.OK).json({ msg: "Your profile is updated successfully" });
+    res.status(StatusCodes.OK).json({
+        msg: "Your profile is updated successfully",
+    });
 };
 
 const deleteUsers = async (req, res) => {
@@ -134,6 +159,7 @@ const deleteUsers = async (req, res) => {
 
 module.exports = {
     getAllUsers,
+    getUserProfile,
     updateUser,
     deleteUsers,
 };
