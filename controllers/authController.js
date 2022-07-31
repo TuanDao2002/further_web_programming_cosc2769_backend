@@ -255,7 +255,7 @@ const forgotPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-        throw new CustomError.BadRequestError("This email does not exist");
+        throw new CustomError.NotFoundError("This email does not exist");
     }
 
     const { username, role, password } = user;
@@ -333,7 +333,7 @@ const resetPassword = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (!user) {
-        throw new CustomError.BadRequestError("This email does not exist");
+        throw new CustomError.NotFoundError("This email does not exist");
     }
 
     user.password = newPassword;

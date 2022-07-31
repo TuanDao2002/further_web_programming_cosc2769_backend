@@ -1,5 +1,5 @@
 const CustomError = require("../errors");
-const normalCharRegex = /^\w+( +\w+)*$/;
+const normalCharRegex = /^[\w\/\\_-]+( +[\w\/\\_-]+)*$/;
 const cloudinaryRegex = /^https:\/\/res.cloudinary.com\//;
 
 const validateRequiredProfileInput = (
@@ -21,9 +21,9 @@ const validateRequiredProfileInput = (
         }
     }
 
-    if (typeof age !== "number" || age < 18) {
+    if (typeof age !== "number" || age < 18 || age > 100) {
         throw new CustomError.BadRequestError(
-            "The age must be valid and at least 18"
+            "The age must be valid and between 18 and 100"
         );
     }
 
@@ -47,11 +47,11 @@ const validateRequiredProfileInput = (
     for (hobby of hobbies) {
         if (
             hobby.length < 3 ||
-            hobby.length > 20 ||
+            hobby.length > 30 ||
             !hobby.match(normalCharRegex)
         ) {
             throw new CustomError.BadRequestError(
-                "Each hobby must have from 3 to 20 characters and has the right format"
+                "Each hobby must have from 3 to 30 characters and has the right format"
             );
         }
     }

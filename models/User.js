@@ -56,7 +56,7 @@ const UserSchema = new mongoose.Schema(
         },
 
         location: {
-            type: [String],
+            type: String,
             enum: {
                 values: ["HCM City", "Hanoi", "Danang"],
                 message: "{VALUE} is not a supported location", // Error message

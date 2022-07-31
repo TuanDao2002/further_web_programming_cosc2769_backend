@@ -5,19 +5,95 @@ const { validateRequiredProfileInput } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
 
 const getAllUsers = async (req, res) => {
-    const users = await User.find();
-    res.status(StatusCodes.OK).json({ users });
+    let { gender, minAge, maxAge, locations, next_cursor } = req.query;
+
+    let queryObject = {};
+
+    queryObject.role = "student";
+
+    // set query conditions if they are set and valid
+    if (gender) {
+        if (gender !== "Male" && gender !== "Female" && gender !== "Other") {
+            throw new CustomError.BadRequestError("Gender must be valid");
+        }
+        queryObject.gender = gender;
+    }
+
+    if (minAge) {
+        if (isNaN(minAge) || minAge < 18 || minAge > 100) {
+            throw new CustomError.BadRequestError(
+                "Min age must be a number and between 18 and 100"
+            );
+        }
+        queryObject.age = { $gte: Number(minAge) };
+    }
+
+    if (maxAge) {
+        if (isNaN(maxAge) || maxAge < 18 || maxAge > 100) {
+            throw new CustomError.BadRequestError(
+                "Max age must be a number and between 18 and 100"
+            );
+        }
+        queryObject.age = { ...queryObject.age, $lte: Number(maxAge) };
+    }
+
+    if (locations) {
+        for (location of locations.split(",")) {
+            if (
+                location !== "HCM City" &&
+                location !== "Hanoi" &&
+                location !== "Danang"
+            ) {
+                throw new CustomError.BadRequestError("Location must be valid");
+            }
+        }
+
+        queryObject.location = { $in: locations.split(",") };
+    }
+
+    // apply cursor based pagination
+    const resultsLimitPerLoading = 10;
+    if (next_cursor) {
+        const [createdAt, _id] = Buffer.from(next_cursor, "base64")
+            .toString("ascii")
+            .split("_");
+
+        queryObject.createdAt = { $lte: createdAt };
+        queryObject._id = { $lt: _id };
+    }
+
+    let users = User.find(queryObject).select(
+        "-password -interested -email -role"
+    );
+
+    // return results sorted based on created time (profiles created first will be displayed first)
+    users = users.sort("-createdAt -_id");
+    users = users.limit(resultsLimitPerLoading);
+    const results = await users;
+
+    const count = await User.countDocuments(queryObject);
+    next_cursor = null;
+
+    // if the there are still remaining results, create a cursor to load the next ones
+    if (count !== results.length) {
+        const lastResult = results[results.length - 1];
+        next_cursor = Buffer.from(
+            lastResult.createdAt.toISOString() + "_" + lastResult._id
+        ).toString("base64");
+    }
+
+    res.status(StatusCodes.OK).json({ results, next_cursor });
 };
 
 const getInterestProfiles = async (req, res) => {
     let {
         user: { userId },
-        query: { next_cursor },
+        query: { next_cursor, matchHobbies },
     } = req;
 
     const user = await User.findOne({ _id: userId });
     if (!user) {
-        throw new CustomError.BadRequestError("Your account does not exist");
+        throw new CustomError.NotFoundError("Your account does not exist");
     }
 
     let queryObject = {};
@@ -31,21 +107,25 @@ const getInterestProfiles = async (req, res) => {
         },
     } = user;
 
-    // queryObject.role = "student";
-    // queryObject._id = { $ne: userId };
-    // queryObject.hobbies = { $in: hobbies };
-    // queryObject.gender = interestedGender;
-    // queryObject.age = { $gte: interestedMinAge, $lte: interestedMaxAge };
-    // queryObject.location = { $in: interestedLocations };
+    if (matchHobbies === "true") {
+        queryObject.hobbies = { $in: hobbies };
+    }
+
+    queryObject.role = "student";
+    queryObject._id = { $ne: userId };
+    queryObject.gender = interestedGender;
+    queryObject.age = { $gte: interestedMinAge, $lte: interestedMaxAge };
+    queryObject.location = { $in: interestedLocations };
 
     // apply cursor based pagination
-    const resultsLimitPerLoading = 10;
+    const resultsLimitPerLoading = 1;
     if (next_cursor) {
         const [createdAt, _id] = Buffer.from(next_cursor, "base64")
             .toString("ascii")
             .split("_");
 
-        queryObject.createdAt = { $lte: createdAt, _id: { $lt: _id } };
+        queryObject.createdAt = { $lte: createdAt };
+        queryObject._id = { $lt: _id };
     }
 
     let users = User.find(queryObject).select(
@@ -79,7 +159,7 @@ const getUserProfile = async (req, res) => {
 
     const user = await User.findOne({ _id: profileId }).select("-password");
     if (!user) {
-        throw new CustomError.BadRequestError("This profile does not exist");
+        throw new CustomError.NotFoundError("This profile does not exist");
     }
 
     if (userId !== profileId) {
@@ -109,7 +189,7 @@ const updateUser = async (req, res) => {
 
     const user = await User.findOne({ _id: profileId });
     if (!user) {
-        throw new CustomError.BadRequestError("This profile does not exist");
+        throw new CustomError.NotFoundError("This profile does not exist");
     }
 
     if (userId !== profileId) {
@@ -172,6 +252,8 @@ const updateUser = async (req, res) => {
 
     if (
         interestedMinAge < 18 ||
+        interestedMinAge > 100 ||
+        interestedMaxAge < 18 ||
         interestedMaxAge > 100 ||
         interestedMinAge >= interestedMaxAge
     ) {
@@ -216,13 +298,13 @@ const updateUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
     const {
-        params: { id: userId },
+        params: { id: profileId },
     } = req;
-    const user = await User.findOne({ _id: userId });
+    const user = await User.findOne({ _id: profileId });
     if (!user) {
-        throw new CustomError.BadRequestError();
+        throw new CustomError.BadRequestError("This profile does not exist");
     } else {
-        User.remove();
+        await User.remove();
         res.status(StatusCodes.OK).json({ msg: "Success! User removed." });
     }
 };
