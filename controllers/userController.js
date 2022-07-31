@@ -41,11 +41,11 @@ const getInterestProfiles = async (req, res) => {
     // apply cursor based pagination
     const resultsLimitPerLoading = 10;
     if (next_cursor) {
-        const createdAt = Buffer.from(next_cursor, "base64")
+        const [createdAt, _id] = Buffer.from(next_cursor, "base64")
             .toString("ascii")
             .split("_");
 
-        queryObject.createdAt = { $gt: createdAt };
+        queryObject.createdAt = { $lte: createdAt, _id: { $lt: _id } };
     }
 
     let users = User.find(queryObject).select(
@@ -53,7 +53,7 @@ const getInterestProfiles = async (req, res) => {
     );
 
     // return results sorted based on created time (profiles created first will be displayed first)
-    users = users.sort("createdAt");
+    users = users.sort("-createdAt -_id");
     users = users.limit(resultsLimitPerLoading);
     const results = await users;
 
@@ -63,9 +63,9 @@ const getInterestProfiles = async (req, res) => {
     // if the there are still remaining results, create a cursor to load the next ones
     if (count !== results.length) {
         const lastResult = results[results.length - 1];
-        next_cursor = Buffer.from(lastResult.createdAt.toISOString()).toString(
-            "base64"
-        );
+        next_cursor = Buffer.from(
+            lastResult.createdAt.toISOString() + "_" + lastResult._id
+        ).toString("base64");
     }
 
     res.status(StatusCodes.OK).json({ results, next_cursor });

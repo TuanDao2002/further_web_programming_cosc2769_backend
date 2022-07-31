@@ -1,5 +1,5 @@
 const CustomError = require("../errors");
-const normalCharRegex = /^[A-Za-z0-9._-]*$/;
+const normalCharRegex = /^\w+( +\w+)*$/;
 const cloudinaryRegex = /^https:\/\/res.cloudinary.com\//;
 
 const validateRequiredProfileInput = (
@@ -51,7 +51,7 @@ const validateRequiredProfileInput = (
             !hobby.match(normalCharRegex)
         ) {
             throw new CustomError.BadRequestError(
-                "Each hobby must have from 3 to 20 characters and does not have any strange character"
+                "Each hobby must have from 3 to 20 characters and has the right format"
             );
         }
     }
