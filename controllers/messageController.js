@@ -36,3 +36,10 @@ const deleteMessage = async (req, res) => {
     const message = await Message.findByIdAndDelete({ _id: messageId});
 
 }
+
+module.exports = {
+    getAllMessage,
+    createMessage,
+    getMessage,
+    deleteMessage
+}
