@@ -115,7 +115,7 @@ const getInterestProfiles = async (req, res) => {
     queryObject.location = { $in: interestedLocations };
 
     // apply cursor based pagination
-    const resultsLimitPerLoading = 1;
+    const resultsLimitPerLoading = 10;
     if (next_cursor) {
         const [matchHobby, createdAt, _id] = Buffer.from(next_cursor, "base64")
             .toString("ascii")
@@ -361,7 +361,7 @@ const deleteUser = async (req, res) => {
     if (!user) {
         throw new CustomError.BadRequestError("This profile does not exist");
     } else {
-        await User.remove();
+        await user.remove();
         res.status(StatusCodes.OK).json({ msg: "Success! User removed." });
     }
 };
