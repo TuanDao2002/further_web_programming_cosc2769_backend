@@ -89,7 +89,7 @@ const getAllUsers = async (req, res) => {
 const getInterestProfiles = async (req, res) => {
     let {
         user: { userId },
-        query: { next_cursor, matchHobbies },
+        query: { next_cursor },
     } = req;
 
     const user = await User.findOne({ _id: userId });
@@ -108,10 +108,6 @@ const getInterestProfiles = async (req, res) => {
         },
     } = user;
 
-    if (matchHobbies === "true") {
-        queryObject.hobbies = { $in: hobbies };
-    }
-
     queryObject.role = "student";
     queryObject._id = { $ne: userId };
     queryObject.gender = interestedGender;
@@ -126,39 +122,33 @@ const getInterestProfiles = async (req, res) => {
             .split("_");
 
         queryObject.$or = [
-            { matchHobby: { $lt: matchHobby } },
+            { matchHobby: { $lt: matchHobby === "true" } },
             {
-                matchHobby: { $eq: parseInt(matchHobby) },
+                matchHobby: matchHobby === "true",
                 createdAt: { $lte: new Date(createdAt) },
                 _id: { $lt: new mongoose.Types.ObjectId(_id) },
             },
         ];
-        // queryObject.createdAt = { $lte: new Date(createdAt) };
-        // queryObject._id = { $lt: new mongoose.Types.ObjectId(_id) };
     }
 
-    /*
-    let users = User.find(queryObject).select(
-        "-password -interested -email -role"
-    );
+    let userHobbies = [];
+    for (hobby of hobbies) {
+        userHobbies.push({ $in: [hobby, { $getField: "hobbies" }] });
+    }
 
-    // return results sorted based on created time (profiles created first will be displayed first)
-    users = users.sort("-createdAt -_id");
-    users = users.limit(resultsLimitPerLoading);
-    const results = await users;
-    */
-
+    // profiles with at least 1 matched hobby will be displayed first
     let results = await User.aggregate([
         {
             $addFields: {
                 matchHobby: {
-                    $cond: [{ $in: ["$hobbies", hobbies] }, 1, 0],
+                    $cond: [{ $or: userHobbies }, true, false],
                 },
             },
         },
 
+        // return results sorted based on created time (profiles created first will be displayed first)
         {
-            $sort: { createdAt: -1, _id: -1 },
+            $sort: { matchHobby: -1, createdAt: -1, _id: -1 },
         },
 
         {
@@ -180,11 +170,11 @@ const getInterestProfiles = async (req, res) => {
     ]);
 
     // const count = await User.countDocuments(queryObject);
-    const query = await User.aggregate([
+    const totalMatchResults = await User.aggregate([
         {
             $addFields: {
                 matchHobby: {
-                    $cond: [{ $in: ["$hobbies", hobbies] }, 1, 0],
+                    $cond: [{ $or: userHobbies }, true, false],
                 },
             },
         },
@@ -200,14 +190,9 @@ const getInterestProfiles = async (req, res) => {
             },
         },
     ]);
-
-    const count = query[0]?.numOfResults || 0
+    const count = totalMatchResults[0]?.numOfResults || 0;
 
     next_cursor = null;
-
-    console.log(count);
-    console.log(results.length);
-
     // if the there are still remaining results, create a cursor to load the next ones
     if (count !== results.length) {
         const lastResult = results[results.length - 1];
