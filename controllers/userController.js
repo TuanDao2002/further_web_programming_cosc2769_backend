@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const CustomError = require("../errors");
+const mongoose = require("mongoose");
 
 const { validateRequiredProfileInput } = require("../utils");
 const { StatusCodes } = require("http-status-codes");
@@ -120,14 +121,23 @@ const getInterestProfiles = async (req, res) => {
     // apply cursor based pagination
     const resultsLimitPerLoading = 1;
     if (next_cursor) {
-        const [createdAt, _id] = Buffer.from(next_cursor, "base64")
+        const [matchHobby, createdAt, _id] = Buffer.from(next_cursor, "base64")
             .toString("ascii")
             .split("_");
 
-        queryObject.createdAt = { $lte: createdAt };
-        queryObject._id = { $lt: _id };
+        queryObject.$or = [
+            { matchHobby: { $lt: matchHobby } },
+            {
+                matchHobby: { $eq: parseInt(matchHobby) },
+                createdAt: { $lte: new Date(createdAt) },
+                _id: { $lt: new mongoose.Types.ObjectId(_id) },
+            },
+        ];
+        // queryObject.createdAt = { $lte: new Date(createdAt) };
+        // queryObject._id = { $lt: new mongoose.Types.ObjectId(_id) };
     }
 
+    /*
     let users = User.find(queryObject).select(
         "-password -interested -email -role"
     );
@@ -136,15 +146,77 @@ const getInterestProfiles = async (req, res) => {
     users = users.sort("-createdAt -_id");
     users = users.limit(resultsLimitPerLoading);
     const results = await users;
+    */
 
-    const count = await User.countDocuments(queryObject);
+    let results = await User.aggregate([
+        {
+            $addFields: {
+                matchHobby: {
+                    $cond: [{ $in: ["$hobbies", hobbies] }, 1, 0],
+                },
+            },
+        },
+
+        {
+            $sort: { createdAt: -1, _id: -1 },
+        },
+
+        {
+            $match: queryObject,
+        },
+
+        {
+            $limit: resultsLimitPerLoading,
+        },
+
+        {
+            $project: {
+                password: 0,
+                interested: 0,
+                email: 0,
+                role: 0,
+            },
+        },
+    ]);
+
+    // const count = await User.countDocuments(queryObject);
+    const query = await User.aggregate([
+        {
+            $addFields: {
+                matchHobby: {
+                    $cond: [{ $in: ["$hobbies", hobbies] }, 1, 0],
+                },
+            },
+        },
+
+        {
+            $match: queryObject,
+        },
+
+        {
+            $group: {
+                _id: null,
+                numOfResults: { $sum: 1 },
+            },
+        },
+    ]);
+
+    const count = query[0]?.numOfResults || 0
+
     next_cursor = null;
+
+    console.log(count);
+    console.log(results.length);
 
     // if the there are still remaining results, create a cursor to load the next ones
     if (count !== results.length) {
         const lastResult = results[results.length - 1];
         next_cursor = Buffer.from(
-            lastResult.createdAt.toISOString() + "_" + lastResult._id
+            lastResult.matchHobby +
+                "_" +
+                lastResult.createdAt.toISOString() +
+                "_" +
+                lastResult._id
         ).toString("base64");
     }
 
