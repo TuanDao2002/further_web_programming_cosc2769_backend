@@ -18,6 +18,7 @@ const connectDB = require("./db/connect");
 const authRouter = require("./routes/authRoutes");
 const userRouter = require("./routes/userRoutes");
 const swipeRouter = require("./routes/swipeRoutes");
+const messageRouter = require("./routes/messageRoutes");
 
 // error handler
 const notFoundMiddleware = require("./middleware/not-found");
@@ -52,6 +53,7 @@ cloudinary.config({
 app.use("/api/auth", authRouter);
 app.use("/api/user", userRouter);
 app.use("/api/swipe", swipeRouter);
+app.use("/api/message", messageRouter);
 
 app.use(notFoundMiddleware);
 app.use(errorHandlerMiddleware);

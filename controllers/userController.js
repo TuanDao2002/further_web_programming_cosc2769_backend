@@ -1,9 +1,10 @@
-const User = require("../models/User");
+const { validateRequiredProfileInput } = require("../utils");
+const { StatusCodes } = require("http-status-codes");
 const CustomError = require("../errors");
 const mongoose = require("mongoose");
 
-const { validateRequiredProfileInput } = require("../utils");
-const { StatusCodes } = require("http-status-codes");
+const User = require("../models/User");
+const Swipe = require("../models/Swipe");
 
 const getAllUsers = async (req, res) => {
     let { gender, minAge, maxAge, locations, next_cursor } = req.query;
@@ -97,7 +98,6 @@ const getInterestProfiles = async (req, res) => {
         throw new CustomError.NotFoundError("Your account does not exist");
     }
 
-    let queryObject = {};
     const {
         hobbies,
         interested: {
@@ -108,8 +108,15 @@ const getInterestProfiles = async (req, res) => {
         },
     } = user;
 
+    // profiles you have swiped past already
+    const swipedProfiles = await Swipe.find({ from: userId });
+    const swipedProfileIds = swipedProfiles.map(
+        (swipedProfile) => swipedProfile.to
+    );
+
+    let queryObject = {};
     queryObject.role = "student";
-    queryObject._id = { $ne: userId };
+    queryObject._id = { $ne: userId, $nin: swipedProfileIds }; // not show your profile and profiles you have swiped past
     queryObject.gender = interestedGender;
     queryObject.age = { $gte: interestedMinAge, $lte: interestedMaxAge };
     queryObject.location = { $in: interestedLocations };
@@ -359,7 +366,7 @@ const deleteUser = async (req, res) => {
     } = req;
     const user = await User.findOne({ _id: profileId });
     if (!user) {
-        throw new CustomError.BadRequestError("This profile does not exist");
+        throw new CustomError.NotFoundError("This profile does not exist");
     } else {
         await user.remove();
         res.status(StatusCodes.OK).json({ msg: "Success! User removed." });

@@ -1,15 +1,19 @@
+const { StatusCodes } = require("http-status-codes");
+const CustomError = require("../errors");
+
 const Swipe = require("../models/Swipe");
 const User = require("../models/User");
 const Room = require("../models/Room");
-
-const { StatusCodes } = require("http-status-codes");
-const CustomError = require("../errors");
 
 const swipeProfile = async (req, res) => {
     const {
         user: { userId },
         body: { profileId, like },
     } = req;
+
+    // userId = "62f125e3c1a70f1d5060614d";
+    // profileId = "62f1267fdba75b10b83ee18f";
+    // like = true;
 
     const user = await User.findOne({ _id: userId });
     if (!user) {
@@ -23,7 +27,7 @@ const swipeProfile = async (req, res) => {
 
     const duplicateSwipe = await Swipe.findOne({ from: userId, to: profileId });
     if (duplicateSwipe) {
-        throw new CustomError.NotFoundError("You already swipe this profile");
+        throw new CustomError.BadRequestError("You already swipe this profile");
     }
 
     const matchSwipe = await Swipe.findOne({
@@ -59,9 +63,18 @@ const getWhoLikeYou = async (req, res) => {
         throw new CustomError.NotFoundError("Your account does not exist");
     }
 
+    // profiles you have swiped past already
+    const swipedProfiles = await Swipe.find({ from: userId });
+    const swipedProfileIds = swipedProfiles.map(
+        (swipedProfile) => swipedProfile.to
+    );
+
     let queryObject = {};
+    // find users' profiles that like you
     queryObject.to = userId;
     queryObject.like = true;
+    // not show profiles that you already swiped
+    queryObject.from = { $nin: swipedProfileIds };
 
     const resultsLimitPerLoading = 10;
     if (next_cursor) {
@@ -109,6 +122,7 @@ const getWhoMatchYou = async (req, res) => {
     }
 
     let queryObject = {};
+    // find the room chat that you and a user that you matched located
     queryObject.participants = userId;
 
     const resultsLimitPerLoading = 10;
