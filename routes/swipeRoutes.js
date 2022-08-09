@@ -4,6 +4,7 @@ const router = express.Router();
 const {
     swipeProfile,
     getWhoLikeYou,
+    getWhoMatchYou
 } = require("../controllers/swipeController");
 
 const {
@@ -13,10 +14,14 @@ const {
 
 router
     .route("/swipeProfile")
-    .patch([authenticateUser, authorizePermissions("student")], swipeProfile);
+    .post([authenticateUser, authorizePermissions("student")], swipeProfile);
 
 router
     .route("/getWhoLikeYou")
     .get([authenticateUser, authorizePermissions("student")], getWhoLikeYou);
+
+router
+    .route("/getWhoMatchYou")
+    .get([authenticateUser, authorizePermissions("student")], getWhoMatchYou);
 
 module.exports = router;
