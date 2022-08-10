@@ -63,9 +63,37 @@ const port = process.env.PORT || 8080;
 const start = async () => {
     try {
         await connectDB(process.env.MONGO_URI);
-        app.listen(port, () =>
+        const server = app.listen(port, () =>
             console.log(`Server is listening on port ${port}...`)
         );
+
+        const io = require("socket.io")(server, {
+            cors: {
+                origin: [
+                    "https://rmitinder.netlify.app",
+                    "http://localhost:3000",
+                ],
+            },
+        });
+
+        io.on("connection", (socket) => {
+            console.log(socket.id);
+
+            socket.on("new-user", (newUser) => {
+                console.log(newUser);
+            });
+
+            socket.on("join-room", (room, name) => {
+                console.log(`${name} join room ${room}`);
+                socket.join(room);
+            });
+
+            socket.on("send-chat-message", (data) => {
+                console.log(data);
+                const { name, room, message } = data;
+                socket.broadcast.to(room).emit("chat-message", { name, message });
+            });
+        });
     } catch (error) {
         console.log(error);
     }
