@@ -53,12 +53,14 @@ const register = async (req, res) => {
         throw new CustomError.BadRequestError("This email already exists");
     }
 
+    const minutesToExpire = 60;
     const verificationToken = makeVerificationToken(
         username,
         email,
         role,
         password,
-        process.env.VERIFICATION_SECRET
+        process.env.VERIFICATION_SECRET,
+        minutesToExpire
     );
 
     const origin =
@@ -69,7 +71,8 @@ const register = async (req, res) => {
         req.useragent.browser,
         email,
         verificationToken,
-        origin
+        origin,
+        minutesToExpire
     );
 
     res.status(StatusCodes.CREATED).json({
@@ -260,12 +263,14 @@ const forgotPassword = async (req, res) => {
 
     const { username, role, password } = user;
 
+    const minutesToExpire = 10;
     const verificationToken = makeVerificationToken(
         username,
         email,
         role,
         password,
-        process.env.VERIFICATION_SECRET
+        process.env.VERIFICATION_SECRET,
+        minutesToExpire
     );
 
     const origin =
@@ -276,7 +281,8 @@ const forgotPassword = async (req, res) => {
         req.useragent.browser,
         email,
         verificationToken,
-        origin
+        origin,
+        minutesToExpire
     );
 
     res.status(StatusCodes.CREATED).json({
