@@ -6,6 +6,8 @@ const Message = require("../models/Message");
 const Room = require("../models/Room");
 const User = require("../models/User");
 
+const { createTokenUser, createJWT } = require("../utils/index");
+
 const getRoomMessages = async (req, res) => {
     let {
         user: { userId },
@@ -17,7 +19,7 @@ const getRoomMessages = async (req, res) => {
         throw new CustomError.NotFoundError("Your account does not exist");
     }
 
-    const room = Room.findOne({ _id: roomId, participants: userId });
+    const room = await Room.findOne({ _id: roomId, participants: userId });
     if (!room) {
         throw new CustomError.NotFoundError(
             "This room does not exist or you are not in this room"
@@ -60,6 +62,25 @@ const getRoomMessages = async (req, res) => {
     res.status(StatusCodes.OK).json({ results, next_cursor });
 };
 
+const getMessageAccessToken = async (req, res) => {
+    const {
+        user: { userId },
+    } = req;
+
+    const user = await User.findOne({ _id: userId });
+    if (!user) {
+        throw new CustomError.NotFoundError("Your account does not exist");
+    }
+
+    const tokenUser = createTokenUser(user);
+    const accessTokenJWT = createJWT(
+        { payload: { tokenUser } },
+        process.env.JWT_SECRET
+    );
+
+    res.status(StatusCodes.OK).json({ token: accessTokenJWT });
+};
+
 const createMessage = async (req, res) => {
     const {
         user: { userId },
@@ -71,7 +92,7 @@ const createMessage = async (req, res) => {
         throw new CustomError.NotFoundError("Your account does not exist");
     }
 
-    const room = Room.findOne({ _id: roomId, participants: userId });
+    const room = await Room.findOne({ _id: roomId, participants: userId });
     if (!room) {
         throw new CustomError.NotFoundError(
             "This room does not exist or you are not in this room"
@@ -90,5 +111,6 @@ const createMessage = async (req, res) => {
 
 module.exports = {
     getRoomMessages,
+    getMessageAccessToken,
     createMessage,
 };

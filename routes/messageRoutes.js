@@ -3,6 +3,7 @@ const router = express.Router();
 
 const {
     getRoomMessages,
+    getMessageAccessToken,
     createMessage,
 } = require("../controllers/messageController");
 
@@ -14,6 +15,13 @@ const {
 router
     .route("/getRoomMessages")
     .get([authenticateUser, authorizePermissions("student")], getRoomMessages);
+
+router
+    .route("/getMessageAccessToken")
+    .get(
+        [authenticateUser, authorizePermissions("student")],
+        getMessageAccessToken
+    );
 
 router
     .route("/createMessage")

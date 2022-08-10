@@ -14,6 +14,9 @@ const app = express();
 // connect DB
 const connectDB = require("./db/connect");
 
+// socket io
+const socketio = require("./socket/socket");
+
 // routers
 const authRouter = require("./routes/authRoutes");
 const userRouter = require("./routes/userRoutes");
@@ -67,33 +70,7 @@ const start = async () => {
             console.log(`Server is listening on port ${port}...`)
         );
 
-        const io = require("socket.io")(server, {
-            cors: {
-                origin: [
-                    "https://rmitinder.netlify.app",
-                    "http://localhost:3000",
-                ],
-            },
-        });
-
-        io.on("connection", (socket) => {
-            console.log(socket.id);
-
-            socket.on("new-user", (newUser) => {
-                console.log(newUser);
-            });
-
-            socket.on("join-room", (room, name) => {
-                console.log(`${name} join room ${room}`);
-                socket.join(room);
-            });
-
-            socket.on("send-chat-message", (data) => {
-                console.log(data);
-                const { name, room, message } = data;
-                socket.broadcast.to(room).emit("chat-message", { name, message });
-            });
-        });
+        socketio(server);
     } catch (error) {
         console.log(error);
     }
