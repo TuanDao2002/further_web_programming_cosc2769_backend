@@ -27,7 +27,7 @@ const getRoomMessages = async (req, res) => {
     }
 
     let queryObject = {};
-    queryObject.roomId = roomId;
+    queryObject.room = roomId;
 
     const resultsLimitPerLoading = 10;
     if (next_cursor) {
@@ -100,8 +100,8 @@ const createMessage = async (req, res) => {
     }
 
     const newMessage = {
-        roomId,
-        userId,
+        room: roomId,
+        user: userId,
         content,
     };
 

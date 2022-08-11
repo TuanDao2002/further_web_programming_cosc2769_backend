@@ -7,13 +7,13 @@ const mongoose = require("mongoose");
 
 const MessageSchema = new mongoose.Schema(
     {
-        roomId: {
+        room: {
             type: mongoose.Types.ObjectId,
             ref: "Room",
             require: true,
         },
 
-        userId: {
+        user: {
             type: mongoose.Types.ObjectId,
             ref: "User",
             reqire: true,
