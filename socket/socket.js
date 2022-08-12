@@ -42,7 +42,7 @@ const socketio = (server) => {
                 console.log(room.participants);
                 socket.join(roomId);
             } catch (err) {
-                socket.emit("error", err.message);
+                socket.to(roomId).emit("error", err.message);
             }
         });
 
@@ -74,7 +74,7 @@ const socketio = (server) => {
                     .emit("chat-message", { name: user.username, message });
                 console.log(user.username)
             } catch (err) {
-                socket.emit("error", err.message);
+                socket.to(roomId).emit("error", err.message);
             }
         });
     });
