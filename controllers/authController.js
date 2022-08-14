@@ -120,7 +120,7 @@ const createProfile = async (req, res) => {
 
     if (new Date(expirationDate).getTime() <= now.getTime()) {
         throw new CustomError.UnauthenticatedError(
-            "Verification token is expired after 10 minutes"
+            "Verification token is expired after 60 minutes"
         );
     }
 
