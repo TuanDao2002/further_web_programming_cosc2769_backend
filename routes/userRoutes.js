@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 
 const {
+    createProfileByAdmin,
     getAllUsers,
     getInterestProfiles,
     getUserProfile,
@@ -15,6 +16,10 @@ const {
 } = require("../middleware/authentication");
 
 router
+    .route("/createProfileByAdmin")
+    .post([authenticateUser, authorizePermissions("admin")], createProfileByAdmin)
+
+router
     .route("/")
     .get([authenticateUser, authorizePermissions("admin")], getAllUsers)
 
@@ -25,7 +30,7 @@ router
 router
     .route("/:id")
     .get([authenticateUser, authorizePermissions("student")], getUserProfile)
-    .patch([authenticateUser, authorizePermissions("student")], updateUser)
+    .patch([authenticateUser, authorizePermissions("student", "admin")], updateUser)
     .delete([authenticateUser, authorizePermissions("admin")], deleteUser);
 
 module.exports = router;

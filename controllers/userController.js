@@ -6,6 +6,65 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const Swipe = require("../models/Swipe");
 
+const crypto = require("crypto")
+
+const createProfileByAdmin = async (req, res) => {
+    const {
+        username,
+        age,
+        gender,
+        location,
+        hobbies,
+        school,
+    } = req.body;
+
+    const randomEmail = crypto.randomUUID() + "@gmail.com";
+    const images = ["https://res.cloudinary.com/dma21c4n9/image/upload/v1659256280/file-upload/Female_i3astd.png"];
+
+    validateRequiredProfileInput(
+        images,
+        age,
+        gender,
+        location,
+        hobbies,
+        school
+    );
+
+    let interestedGender;
+    if (gender === "Male") {
+        interestedGender = "Female";
+    } else if (gender === "Female") {
+        interestedGender = "Male";
+    } else {
+        interestedGender = "Other";
+    }
+
+    const interested = {
+        interestedGender,
+        interestedMinAge: age <= 23 ? 18 : age - 5,
+        interestedMaxAge: age + 5,
+        interestedLocations: [location],
+    };
+
+    await User.create({
+        username,
+        email: randomEmail,
+        role: "student",
+        password: "default",
+        images: ["https://res.cloudinary.com/dma21c4n9/image/upload/v1659256280/file-upload/Female_i3astd.png"],
+        age,
+        gender,
+        location,
+        hobbies,
+        school,
+        interested,
+    });
+
+    res.status(StatusCodes.OK).json({
+        msg: `Profile with username: ${username} is created!`,
+    });
+}
+
 const getAllUsers = async (req, res) => {
     let { gender, minAge, maxAge, locations, next_cursor } = req.query;
 
@@ -248,7 +307,7 @@ const updateUser = async (req, res) => {
             school,
             interested,
         },
-        user: { userId },
+        user: { userId, role },
     } = req;
 
     const user = await User.findOne({ _id: profileId });
@@ -256,7 +315,7 @@ const updateUser = async (req, res) => {
         throw new CustomError.NotFoundError("This profile does not exist");
     }
 
-    if (userId !== profileId) {
+    if (userId !== profileId && role !== "admin") {
         throw new CustomError.BadRequestError("You cannot edit this profile");
     }
 
@@ -374,6 +433,7 @@ const deleteUser = async (req, res) => {
 };
 
 module.exports = {
+    createProfileByAdmin,
     getAllUsers,
     getInterestProfiles,
     getUserProfile,
