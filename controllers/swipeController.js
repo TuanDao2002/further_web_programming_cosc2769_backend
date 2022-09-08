@@ -76,16 +76,6 @@ const getWhoLikeYou = async (req, res) => {
     // not show profiles that you already swiped
     queryObject.from = { $nin: swipedProfileIds };
 
-    const resultsLimitPerLoading = 10;
-    if (next_cursor) {
-        const [createdAt, _id] = Buffer.from(next_cursor, "base64")
-            .toString("ascii")
-            .split("_");
-
-        queryObject.createdAt = { $lte: createdAt };
-        queryObject._id = { $lt: _id };
-    }
-
     let whoLikeYou = Swipe.find(queryObject).populate({
         path: "from",
         select: "-password -interested -email -role",
@@ -93,21 +83,9 @@ const getWhoLikeYou = async (req, res) => {
 
     // return results sorted based on created time (profiles created first will be displayed first)
     whoLikeYou = whoLikeYou.sort("-createdAt -_id");
-    whoLikeYou = whoLikeYou.limit(resultsLimitPerLoading);
     const results = await whoLikeYou;
 
-    const count = await Swipe.countDocuments(queryObject);
-    next_cursor = null;
-
-    // if the there are still remaining results, create a cursor to load the next ones
-    if (count !== results.length) {
-        const lastResult = results[results.length - 1];
-        next_cursor = Buffer.from(
-            lastResult.createdAt.toISOString() + "_" + lastResult._id
-        ).toString("base64");
-    }
-
-    res.status(StatusCodes.OK).json({ results, next_cursor });
+    res.status(StatusCodes.OK).json({ next_cursor });
 };
 
 const getWhoMatchYou = async (req, res) => {
@@ -125,16 +103,6 @@ const getWhoMatchYou = async (req, res) => {
     // find the room chat that you and a user that you matched located
     queryObject.participants = userId;
 
-    const resultsLimitPerLoading = 10;
-    if (next_cursor) {
-        const [createdAt, _id] = Buffer.from(next_cursor, "base64")
-            .toString("ascii")
-            .split("_");
-
-        queryObject.createdAt = { $lte: createdAt };
-        queryObject._id = { $lt: _id };
-    }
-
     let whoMatchYou = Room.find(queryObject).populate({
         path: "participants",
         match: { _id: { $ne: userId } },
@@ -142,19 +110,7 @@ const getWhoMatchYou = async (req, res) => {
     });
 
     whoMatchYou = whoMatchYou.sort("-createdAt -_id");
-    whoMatchYou = whoMatchYou.limit(resultsLimitPerLoading);
     const results = await whoMatchYou;
-
-    const count = await Room.countDocuments(queryObject);
-    next_cursor = null;
-
-    // if the there are still remaining results, create a cursor to load the next ones
-    if (count !== results.length) {
-        const lastResult = results[results.length - 1];
-        next_cursor = Buffer.from(
-            lastResult.createdAt.toISOString() + "_" + lastResult._id
-        ).toString("base64");
-    }
 
     res.status(StatusCodes.OK).json({ results, next_cursor });
 };

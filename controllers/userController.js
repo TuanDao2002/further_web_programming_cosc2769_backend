@@ -180,6 +180,8 @@ const getInterestProfiles = async (req, res) => {
     queryObject.age = { $gte: interestedMinAge, $lte: interestedMaxAge };
     queryObject.location = { $in: interestedLocations };
 
+    console.log(queryObject)
+
     // apply cursor based pagination
     const resultsLimitPerLoading = 1;
     if (next_cursor) {
