@@ -6,20 +6,15 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const Swipe = require("../models/Swipe");
 
-const crypto = require("crypto")
+const crypto = require("crypto");
 
 const createProfileByAdmin = async (req, res) => {
-    const {
-        username,
-        age,
-        gender,
-        location,
-        hobbies,
-        school,
-    } = req.body;
+    const { username, age, gender, location, hobbies, school } = req.body;
 
     const randomEmail = crypto.randomUUID() + "@gmail.com";
-    const images = ["https://res.cloudinary.com/dma21c4n9/image/upload/v1659256280/file-upload/Female_i3astd.png"];
+    const images = [
+        "https://res.cloudinary.com/dma21c4n9/image/upload/v1659256280/file-upload/Female_i3astd.png",
+    ];
 
     validateRequiredProfileInput(
         images,
@@ -51,7 +46,9 @@ const createProfileByAdmin = async (req, res) => {
         email: randomEmail,
         role: "student",
         password: "default",
-        images: ["https://res.cloudinary.com/dma21c4n9/image/upload/v1659256280/file-upload/Female_i3astd.png"],
+        images: [
+            "https://res.cloudinary.com/dma21c4n9/image/upload/v1659256280/file-upload/Female_i3astd.png",
+        ],
         age,
         gender,
         location,
@@ -63,7 +60,7 @@ const createProfileByAdmin = async (req, res) => {
     res.status(StatusCodes.OK).json({
         msg: `Profile with username: ${username} is created!`,
     });
-}
+};
 
 const getAllUsers = async (req, res) => {
     let { gender, minAge, maxAge, locations, next_cursor } = req.query;
@@ -169,21 +166,24 @@ const getInterestProfiles = async (req, res) => {
 
     // profiles you have swiped past already
     const swipedProfiles = await Swipe.find({ from: userId });
-    const swipedProfileIds = swipedProfiles.map(
-        (swipedProfile) => swipedProfile.to
+    let swipedProfileIds = swipedProfiles.map(
+        (swipedProfile) => new mongoose.Types.ObjectId(swipedProfile.to)
     );
+
+    swipedProfileIds = [
+        ...swipedProfileIds,
+        new mongoose.Types.ObjectId(userId),
+    ];
 
     let queryObject = {};
     queryObject.role = "student";
-    queryObject._id = { $ne: userId, $nin: swipedProfileIds }; // not show your profile and profiles you have swiped past
+    queryObject._id = { $nin: swipedProfileIds }; // not show your profile and profiles you have swiped past
     queryObject.gender = interestedGender;
     queryObject.age = { $gte: interestedMinAge, $lte: interestedMaxAge };
     queryObject.location = { $in: interestedLocations };
 
-    console.log(queryObject)
-
     // apply cursor based pagination
-    const resultsLimitPerLoading = 1;
+    const resultsLimitPerLoading = 20;
     if (next_cursor) {
         const [matchHobby, createdAt, _id] = Buffer.from(next_cursor, "base64")
             .toString("ascii")
@@ -203,6 +203,8 @@ const getInterestProfiles = async (req, res) => {
     for (hobby of hobbies) {
         userHobbies.push({ $in: [hobby, { $getField: "hobbies" }] });
     }
+
+    console.log(queryObject);
 
     // profiles with at least 1 matched hobby will be displayed first
     let results = await User.aggregate([
