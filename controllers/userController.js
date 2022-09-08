@@ -181,7 +181,7 @@ const getInterestProfiles = async (req, res) => {
     queryObject.location = { $in: interestedLocations };
 
     // apply cursor based pagination
-    const resultsLimitPerLoading = 10;
+    const resultsLimitPerLoading = 1;
     if (next_cursor) {
         const [matchHobby, createdAt, _id] = Buffer.from(next_cursor, "base64")
             .toString("ascii")
