@@ -89,6 +89,7 @@ const createProfile = async (req, res) => {
         gender,
         location,
         hobbies,
+        biography,
         school,
     } = req.body;
     if (!verificationToken) {
@@ -153,6 +154,12 @@ const createProfile = async (req, res) => {
         school
     );
 
+    if (biography === undefined || biography.length > 500) {
+        throw new CustomError.BadRequestError(
+            "Biography must be defined and less than 500 characters"
+        );
+    }
+
     let interestedGender;
     if (gender === "Male") {
         interestedGender = "Female";
@@ -179,6 +186,7 @@ const createProfile = async (req, res) => {
         gender,
         location,
         hobbies,
+        biography,
         school,
         interested,
     });
