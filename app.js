@@ -30,10 +30,14 @@ const errorHandlerMiddleware = require("./middleware/error-handler");
 app.set("trust proxy", 1);
 app.use(helmet());
 app.use(
-    cors({
-        credentials: true,
-        origin: ["https://rmitinder.netlify.app", "http://localhost:3000"], // only allow website in this domain too access the resource of this server
-    })
+	cors({
+		credentials: true,
+		origin: [
+			"https://rmitinder.netlify.app",
+			"https://rmit-tinder.netlify.app",
+			"http://localhost:3000",
+		], // only allow website in this domain too access the resource of this server
+	})
 );
 app.use(xss());
 app.use(useragent.express());
@@ -47,9 +51,9 @@ app.use(fileUpload({ useTempFiles: true }));
 // config cloudinary V2
 const cloudinary = require("cloudinary").v2;
 cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET,
+	cloud_name: process.env.CLOUDINARY_NAME,
+	api_key: process.env.CLOUDINARY_API_KEY,
+	api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 // routes
@@ -64,16 +68,16 @@ app.use(errorHandlerMiddleware);
 const port = process.env.PORT || 8080;
 
 const start = async () => {
-    try {
-        await connectDB(process.env.MONGO_URI);
-        const server = app.listen(port, () =>
-            console.log(`Server is listening on port ${port}...`)
-        );
+	try {
+		await connectDB(process.env.MONGO_URI);
+		const server = app.listen(port, () =>
+			console.log(`Server is listening on port ${port}...`)
+		);
 
-        socketio(server);
-    } catch (error) {
-        console.log(error);
-    }
+		socketio(server);
+	} catch (error) {
+		console.log(error);
+	}
 };
 
 start();
