@@ -12,9 +12,6 @@ const createProfileByAdmin = async (req, res) => {
     const { username, age, gender, location, hobbies, school } = req.body;
 
     const randomEmail = crypto.randomUUID() + "@gmail.com";
-    const images = [
-        "https://res.cloudinary.com/dma21c4n9/image/upload/v1659256280/file-upload/Female_i3astd.png",
-    ];
 
     validateRequiredProfileInput(
         images,
@@ -47,7 +44,7 @@ const createProfileByAdmin = async (req, res) => {
         role: "student",
         password: "default",
         images: [
-            "https://res.cloudinary.com/dma21c4n9/image/upload/v1659256280/file-upload/Female_i3astd.png",
+            "https://res.cloudinary.com/dma21c4n9/image/upload/v1662780881/file-upload/300765943_639982391021978_2637931582795209254_n_budvbq.png",
         ],
         age,
         gender,
