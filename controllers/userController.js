@@ -60,11 +60,15 @@ const createProfileByAdmin = async (req, res) => {
 };
 
 const getAllUsers = async (req, res) => {
-    let { gender, minAge, maxAge, locations, next_cursor } = req.query;
+    let { username, gender, minAge, maxAge, locations, next_cursor } =
+        req.query;
 
     let queryObject = {};
 
     queryObject.role = "student";
+    if (username) {
+        queryObject.username = { $regex: `${username}`, $options: "i" };
+    }
 
     // set query conditions if they are set and valid
     if (gender) {
