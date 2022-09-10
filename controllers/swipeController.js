@@ -63,18 +63,10 @@ const getWhoLikeYou = async (req, res) => {
 		throw new CustomError.NotFoundError("Your account does not exist");
 	}
 
-	// profiles you have swiped past already
-	const swipedProfiles = await Swipe.find({ from: userId });
-	const swipedProfileIds = swipedProfiles.map(
-		(swipedProfile) => swipedProfile.to
-	);
-
 	let queryObject = {};
 	// find users' profiles that like you
 	queryObject.to = userId;
 	queryObject.like = true;
-	// not show profiles that you already swiped
-	queryObject.from = { $nin: swipedProfileIds };
 
 	let whoLikeYou = Swipe.find(queryObject).populate({
 		path: "from",
