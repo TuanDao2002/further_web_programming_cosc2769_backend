@@ -32,11 +32,7 @@ app.use(helmet());
 app.use(
 	cors({
 		credentials: true,
-		origin: [
-			"https://rmitinder.netlify.app",
-			"https://rmit-tinder.netlify.app",
-			"http://localhost:3000",
-		], // only allow website in this domain too access the resource of this server
+		origin: ["https://rmit-tinder.netlify.app", "http://localhost:3000"], // only allow website in this domain too access the resource of this server
 	})
 );
 app.use(xss());
