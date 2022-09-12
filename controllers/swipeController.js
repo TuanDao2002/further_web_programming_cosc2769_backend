@@ -70,18 +70,22 @@ const getWhoLikeYou = async (req, res) => {
 	queryObject.like = true;
 
 	const matchedProfiles = await Room.find({ participants: userId });
-	const matchedProfileIds = [];
-	console.log(`Type ${typeof userId} -> ${userId}`)
-	for (matchedProfile of matchedProfiles) {
-		for (participant of matchedProfile.participants) {
+	let ignoreProfileIds = [];
+	for (ignoreProfile of matchedProfiles) {
+		for (participant of ignoreProfile.participants) {
 			if (String(participant) !== userId) {
-				matchedProfileIds.push(participant);
+				ignoreProfileIds.push(participant);
 			}
 		}
 	}
 
-	queryObject.from = { $nin: matchedProfileIds };
-	console.log(queryObject);
+	const rejectedProfiles = await Swipe.find({ from: userId, like: false });
+	let rejectedProfileIds = rejectedProfiles.map(
+		(rejectedProfile) => new mongoose.Types.ObjectId(rejectedProfile.to)
+	);
+
+	ignoreProfileIds = [...ignoreProfileIds, ...rejectedProfileIds]
+	queryObject.from = { $nin: ignoreProfileIds };
 
 	let whoLikeYou = Swipe.find(queryObject).populate({
 		path: "from",
