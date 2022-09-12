@@ -1,5 +1,6 @@
 const { StatusCodes } = require("http-status-codes");
 const CustomError = require("../errors");
+const mongoose = require("mongoose");
 
 const Swipe = require("../models/Swipe");
 const User = require("../models/User");
@@ -67,6 +68,20 @@ const getWhoLikeYou = async (req, res) => {
 	// find users' profiles that like you
 	queryObject.to = userId;
 	queryObject.like = true;
+
+	const matchedProfiles = await Room.find({ participants: userId });
+	const matchedProfileIds = [];
+	console.log(`Type ${typeof userId} -> ${userId}`)
+	for (matchedProfile of matchedProfiles) {
+		for (participant of matchedProfile.participants) {
+			if (String(participant) !== userId) {
+				matchedProfileIds.push(participant);
+			}
+		}
+	}
+
+	queryObject.from = { $nin: matchedProfileIds };
+	console.log(queryObject);
 
 	let whoLikeYou = Swipe.find(queryObject).populate({
 		path: "from",

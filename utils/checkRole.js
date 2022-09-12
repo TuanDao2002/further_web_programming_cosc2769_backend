@@ -6,7 +6,7 @@ const checkRole = (email) => {
         throw new CustomError.UnauthenticatedError("Empty email");
     }
 
-    if (email.match(/^s3[0-9]{6}@rmit\.edu\.vn$/)) {
+    if (email.match(/^[\w-.]+@([\w-]+\.)+[\w-]{2,4}$/)) {
         return "student";
     }
 
