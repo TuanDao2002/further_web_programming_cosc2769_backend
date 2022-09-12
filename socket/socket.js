@@ -67,7 +67,7 @@ const socketio = (server) => {
 
 				socket.broadcast
 					.to(roomId)
-					.emit("chat-message", { name: user.username, message });
+					.emit("chat-message", { userId, name: user.username, message });
 				console.log(user.username);
 			} catch (err) {
 				socket.to(roomId).emit("error", err.message);
